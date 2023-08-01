@@ -38,11 +38,11 @@ objects:
               image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui:latest
               resources:
                 limits:
-                  cpu: 100m
-                  memory: 64Mi
-                requests:
                   cpu: 200m
                   memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               imagePullPolicy: Always
