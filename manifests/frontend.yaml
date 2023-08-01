@@ -9,6 +9,8 @@ objects:
     metadata:
       name: react-ui
       annotations:
+        app.openshift.io/connects-to: >-
+          [{"apiVersion":"apps/v1","kind":"Deployment","name":"quarkus-backend"}]
         image.openshift.io/triggers: >-
           [{"from":{"kind":"ImageStreamTag","name":"react-ui:latest","namespace":"${NAMESPACE}"},"fieldPath":"spec.template.spec.containers[?(@.name==\"react-ui\")].image","pause":"false"}]
       labels:
