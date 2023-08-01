@@ -1,0 +1,139 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: cors-frontend-template
+objects:
+  - kind: Deployment
+    namespace: ${NAMESPACE}
+    apiVersion: apps/v1
+    metadata:
+      name: quarkus-backend
+      annotations:
+        image.openshift.io/triggers: >-
+          [{"from":{"kind":"ImageStreamTag","name":"quarkus-backend:latest","namespace":"${NAMESPACE}"},"fieldPath":"spec.template.spec.containers[?(@.name==\"quarkus-backend\")].image","pause":"false"}]
+      labels:
+        app: quarkus-backend
+        app.kubernetes.io/component: quarkus-backend
+        app.kubernetes.io/instance: quarkus-backend
+        app.kubernetes.io/name: quarkus-backend
+        app.kubernetes.io/part-of: cors-proxy-demo
+        app.openshift.io/runtime: quarkus
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: quarkus-backend
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: quarkus-backend
+            deployment: quarkus-backend
+        spec:
+          containers:
+            - name: quarkus-backend
+              image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/quarkus-backend:latest
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          schedulerName: default-scheduler
+          imagePullSecrets: []
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
+      paused: false
+  - kind: BuildConfig
+    namespace: ${NAMESPACE}
+    apiVersion: build.openshift.io/v1
+    metadata:
+      annotations:
+        app.openshift.io/vcs-uri: ${SOURCE_REPOSITORY}
+      name: quarkus-backend
+      labels:
+        app: quarkus-backend
+        app.kubernetes.io/component: quarkus-backend
+        app.kubernetes.io/instance: quarkus-backend
+        app.kubernetes.io/name: quarkus-backend
+        app.kubernetes.io/part-of: cors-proxy-demo
+    spec:
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: 'quarkus-backend:latest'
+      resources: {}
+      successfulBuildsHistoryLimit: 5
+      failedBuildsHistoryLimit: 5
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: src/main/docker/Dockerfile
+      postCommit: {}
+      source:
+        type: Git
+        git:
+          uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+        contextDir: /quarkus-backend
+      triggers:
+        - type: ConfigChange
+      runPolicy: Serial
+  - kind: Service
+    namespace: ${NAMESPACE}
+    apiVersion: v1
+    metadata:
+      name: quarkus-backend
+      labels:
+        app: quarkus-backend
+        app.kubernetes.io/component: quarkus-backend
+        app.kubernetes.io/instance: quarkus-backend
+        app.kubernetes.io/name: quarkus-backend
+        app.kubernetes.io/part-of: cors-proxy-demo
+      annotations:
+        app.openshift.io/vcs-ref: ''
+        app.openshift.io/vcs-uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+    spec:
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+      internalTrafficPolicy: Cluster
+      type: ClusterIP
+      ipFamilyPolicy: SingleStack
+      sessionAffinity: None
+      selector:
+        app: quarkus-backend
+        deployment: quarkus-backend
+  - kind: ImageStream
+    namespace: ${NAMESPACE}
+    apiVersion: image.openshift.io/v1
+    metadata:
+      annotations:
+        app.openshift.io/vcs-ref: ''
+        app.openshift.io/vcs-uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+      name: quarkus-backend
+      labels:
+        app: quarkus-backend
+        app.kubernetes.io/component: quarkus-backend
+        app.kubernetes.io/instance: quarkus-backend
+        app.kubernetes.io/name: quarkus-backend
+        app.kubernetes.io/part-of: cors-proxy-demo
+    spec:
+      lookupPolicy:
+        local: false
+parameters:
+- description: The GitHub repository containing the application source, e.g "https://github.com/evanshortiss/cors-nginx-blogpost"
+  required: true
+  name: SOURCE_REPOSITORY
+- description: The namespace where resources should be deployed.
+  required: true
+  name: NAMESPACE

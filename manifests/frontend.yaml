@@ -1,0 +1,161 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: cors-frontend-template
+objects:
+  - kind: Deployment
+    namespace: ${NAMESPACE}
+    apiVersion: apps/v1
+    metadata:
+      name: react-ui
+      annotations:
+        image.openshift.io/triggers: >-
+          [{"from":{"kind":"ImageStreamTag","name":"react-ui:latest","namespace":"${NAMESPACE}"},"fieldPath":"spec.template.spec.containers[?(@.name==\"react-ui\")].image","pause":"false"}]
+      labels:
+        app: react-ui
+        app.kubernetes.io/component: react-ui
+        app.kubernetes.io/instance: react-ui
+        app.kubernetes.io/name: react-ui
+        app.kubernetes.io/part-of: cors-proxy-demo
+        app.openshift.io/runtime: nginx
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: react-ui
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: react-ui
+            deployment: react-ui
+        spec:
+          containers:
+            - name: react-ui
+              image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui:latest
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          schedulerName: default-scheduler
+          imagePullSecrets: []
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
+      paused: false
+  - kind: BuildConfig
+    namespace: ${NAMESPACE}
+    apiVersion: build.openshift.io/v1
+    metadata:
+      annotations:
+        app.openshift.io/vcs-uri: ${SOURCE_REPOSITORY}
+      name: react-ui
+      labels:
+        app: react-ui
+        app.kubernetes.io/component: react-ui
+        app.kubernetes.io/instance: react-ui
+        app.kubernetes.io/name: react-ui
+        app.kubernetes.io/part-of: cors-proxy-demo
+    spec:
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: 'react-ui:latest'
+      resources: {}
+      successfulBuildsHistoryLimit: 5
+      failedBuildsHistoryLimit: 5
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Containerfile
+      postCommit: {}
+      source:
+        type: Git
+        git:
+          uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+        contextDir: /react-ui
+      triggers:
+        - type: ConfigChange
+      runPolicy: Serial
+  - kind: Service
+    namespace: ${NAMESPACE}
+    apiVersion: v1
+    metadata:
+      name: react-ui
+      labels:
+        app: react-ui
+        app.kubernetes.io/component: react-ui
+        app.kubernetes.io/instance: react-ui
+        app.kubernetes.io/name: react-ui
+        app.kubernetes.io/part-of: cors-proxy-demo
+      annotations:
+        app.openshift.io/vcs-ref: ''
+        app.openshift.io/vcs-uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+    spec:
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+      internalTrafficPolicy: Cluster
+      type: ClusterIP
+      ipFamilyPolicy: SingleStack
+      sessionAffinity: None
+      selector:
+        app: react-ui
+        deployment: react-ui
+  - kind: ImageStream
+    namespace: ${NAMESPACE}
+    apiVersion: image.openshift.io/v1
+    metadata:
+      annotations:
+        app.openshift.io/vcs-ref: ''
+        app.openshift.io/vcs-uri: 'https://github.com/evanshortiss/cors-nginx-blogpost'
+      name: react-ui
+      labels:
+        app: react-ui
+        app.kubernetes.io/component: react-ui
+        app.kubernetes.io/instance: react-ui
+        app.kubernetes.io/name: react-ui
+        app.kubernetes.io/part-of: cors-proxy-demo
+    spec:
+      lookupPolicy:
+        local: false
+  - kind: Route
+    namespace: ${NAMESPACE}
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: react-ui
+      labels:
+        app: react-ui
+        app.kubernetes.io/component: react-ui
+        app.kubernetes.io/instance: react-ui
+        app.kubernetes.io/name: react-ui
+        app.kubernetes.io/part-of: cors-proxy-demo
+    spec:
+      to:
+        kind: Service
+        name: react-ui
+        weight: 100
+      port:
+        targetPort: 8080-tcp
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+      wildcardPolicy: None
+parameters:
+- description: The GitHub repository containing the application source, e.g "https://github.com/evanshortiss/cors-nginx-blogpost"
+  required: true
+  name: SOURCE_REPOSITORY
+- description: The namespace where resources should be deployed.
+  required: true
+  name: NAMESPACE
