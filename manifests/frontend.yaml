@@ -32,8 +32,17 @@ objects:
         spec:
           containers:
             - name: react-ui
+              env:
+              - name: API_URL
+                value: 'http://quarkus-backend.${NAMESPACE}.svc.cluster.local:8080'
               image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/react-ui:latest
-              resources: {}
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                requests:
+                  cpu: 200m
+                  memory: 128Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               imagePullPolicy: Always

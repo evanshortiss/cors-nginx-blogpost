@@ -33,7 +33,13 @@ objects:
           containers:
             - name: quarkus-backend
               image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/quarkus-backend:latest
-              resources: {}
+              resources:
+                limits:
+                  cpu: 250m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               imagePullPolicy: Always
