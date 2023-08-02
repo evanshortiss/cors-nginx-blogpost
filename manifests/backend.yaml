@@ -136,6 +136,29 @@ objects:
     spec:
       lookupPolicy:
         local: false
+  - kind: Route
+    apiVersion: route.openshift.io/v1
+    namespace: ${NAMESPACE}
+    metadata:
+      name: quarkus-backend
+      labels:
+        app: quarkus-backend
+        app.kubernetes.io/component: quarkus-backend
+        app.kubernetes.io/instance: quarkus-backend
+        app.kubernetes.io/name: quarkus-backend
+        app.kubernetes.io/part-of: cors-proxy-demo
+      annotations:
+        openshift.io/host.generated: 'true'
+    spec:
+      to:
+        kind: Service
+        name: quarkus-backend
+        weight: 100
+      port:
+        targetPort: 8080-tcp
+      tls:
+        termination: edge
+      wildcardPolicy: None
 parameters:
 - description: The GitHub repository containing the application source, e.g "https://github.com/evanshortiss/cors-nginx-blogpost"
   required: true

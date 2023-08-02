@@ -7,7 +7,7 @@ import './App.css'
 import { useState } from 'react'
 
 const UI_ROUTE_PREFIX = 'react-ui'
-const BACKEND_ROUTE_PREFIX = 'backend'
+const BACKEND_ROUTE_PREFIX = 'quarkus-backend'
 const ENDPOINT = '/hello'
 
 function App() {
