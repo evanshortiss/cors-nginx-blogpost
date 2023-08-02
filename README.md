@@ -5,7 +5,7 @@ Sharing (CORS) issues by serving your HTML, CSS, JavaScript, and API endpoints
 from the same origin.
 
 <div align="center">
-  <img width="50%" src="drawings/cors-after.png" alt="NGINX Serving Static Assets and an API" title="NGINX Serving Static Assets and an API"</img>
+  <img width="80%" src="drawings/cors-after.png" alt="NGINX Serving Static Assets and an API" title="NGINX Serving Static Assets and an API"</img>
 </div>
 
 ## Deploy on OpenShift
