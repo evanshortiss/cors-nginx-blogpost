@@ -14,6 +14,10 @@ Use the following commands to deploy this application on OpenShift, e.g th free
 [OpenShift Developer Sandbox](https://developers.redhat.com/developer-sandbox):
 
 ```bash
+# Clone and change directory into the repository
+git clone https://github.com/evanshortiss/cors-nginx-blogpost
+cd cors-nginx-blogpost
+
 # Get the current namespace/project name
 export NAMESPACE=$(oc project -q)
 
@@ -26,6 +30,12 @@ oc process -f manifests/frontend.yaml -p NAMESPACE=$NAMESPACE -p SOURCE_REPOSITO
 
 # Deploy the backend
 oc process -f manifests/backend.yaml -p NAMESPACE=$NAMESPACE -p SOURCE_REPOSITORY=$SOURCE_REPOSITORY | oc apply -f -
+```
+
+To clean up all the resources associated with this solution, use this command:
+
+```bash
+oc delete all -l 'app in (react-ui,quarkus-backend)'
 ```
 
 ## Local Development
